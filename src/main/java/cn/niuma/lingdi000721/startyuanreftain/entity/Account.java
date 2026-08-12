@@ -4,7 +4,6 @@ import cn.niuma.lingdi000721.startyuanreftain.enums.AccountStatus;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.Value;
 
 import java.time.LocalDateTime;
 
@@ -37,7 +36,7 @@ public class Account {
     @TableField(value = "updated_at",
             insertStrategy = FieldStrategy.NEVER,
             updateStrategy = FieldStrategy.NEVER)
-    private LocalDateTime updateAt;
+    private LocalDateTime updatedAt;
 
     public Account()
     {
