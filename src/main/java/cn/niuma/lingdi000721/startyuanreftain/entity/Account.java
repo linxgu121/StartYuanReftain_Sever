@@ -17,6 +17,9 @@ public class Account {
     @TableField(value = "account_uuid", updateStrategy = FieldStrategy.NEVER)
     private String accountUuid;
 
+    @TableField(value = "player_uid", updateStrategy = FieldStrategy.NEVER)
+    private Long playerUid;
+
     @TableField(value = "username", updateStrategy = FieldStrategy.NEVER)
     private String username;
 
@@ -48,10 +51,12 @@ public class Account {
      */
     public Account(
             String accountUuid,
+            long playerUid,
             String username,
             String passwordHash)
     {
         this.accountUuid = accountUuid;
+        this.playerUid = playerUid;
         this.username = username;
         this.passwordHash = passwordHash;
         this.status = AccountStatus.ACTIVE;

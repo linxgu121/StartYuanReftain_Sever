@@ -1,4 +1,4 @@
-package cn.niuma.lingdi000721.startyuanreftain.common.dto.account;
+package cn.niuma.lingdi000721.startyuanreftain.dto.account;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

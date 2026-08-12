@@ -10,7 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  */
 @Configuration(proxyBeanMethods = false)
 public class PasswordEncoderConfiguration {
-    //Cost Factor（成本因子），表示 2^12 = 4096 轮哈希迭代
+    //Cost Factor（成本因子）
     private static final int BCRYPT_STRENGTH = 12;
 
     @Bean
