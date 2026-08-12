@@ -6,6 +6,9 @@ import cn.niuma.lingdi000721.startyuanreftain.common.error.ErrorCode;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * 统一响应record
+ */
 public record ApiResponse<T>(
         boolean success,
         String code,
