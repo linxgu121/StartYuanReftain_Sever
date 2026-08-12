@@ -6,7 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-
+import org.springframework.http.HttpMethod;
 /**
  * Spring Security 的过滤器链配置
  * 作用是把游戏后端默认锁死——除了健康检查接口，其他所有请求一律拒绝
@@ -29,6 +29,10 @@ public class WebSecurityConfiguration {
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/auth/register")
+                        .permitAll()
                         .requestMatchers(
                                 "/actuator/health",
                                 "/actuator/health/**")
