@@ -10,7 +10,17 @@ public enum AccountErrorCode implements ErrorCode {
     USERNAME_ALREADY_EXISTS(
             "ACCOUNT_USERNAME_ALREADY_EXISTS",
             HttpStatus.CONFLICT,
-            "用户名已被使用");
+            "用户名已被使用"),
+
+    INVALID_CREDENTIALS(
+            "ACCOUNT_INVALID_CREDENTIALS",
+            HttpStatus.UNAUTHORIZED,
+            "用户名或密码错误"),
+
+    ACCOUNT_BANNED(
+            "ACCOUNT_BANNED",
+            HttpStatus.FORBIDDEN,
+            "账号已被封禁");
 
     private final String code;
     private final HttpStatus httpStatus;

@@ -21,6 +21,9 @@ import java.util.UUID;
 public class AccountRegistrationTransaction {
     //数据库层面保证 `username` 不能重复，防止两个人注册同名账号
     private static final String USERNAME_UNIQUE_CONSTRAINT = "uk_account_username";
+    private static final String PLAYER_UID_UNIQUE_CONSTRAINT = "uk_account_player_uid";
+
+    private static final int MAX_PLAYER_UID_ATTEMPTS = 8;
 
     private final PlayerUidGenerator playerUidGenerator;
     private final AccountMapper accountMapper;
@@ -29,39 +32,32 @@ public class AccountRegistrationTransaction {
     public AccountRegistrationTransaction(
             AccountMapper accountMapper,
             PlayerWarehouseMapper warehouseMapper,
-            PlayerUidGenerator playerUidGenerator)
-    {
+            PlayerUidGenerator playerUidGenerator) {
         this.accountMapper = Objects.requireNonNull(accountMapper, "accountMapper 不能为空");
 
         this.warehouseMapper = Objects.requireNonNull(warehouseMapper, "warehouseMapper 不能为空");
 
-        this.playerUidGenerator = Objects.requireNonNull(playerUidGenerator,"playerUidGenerator 不能为空");
+        this.playerUidGenerator = Objects.requireNonNull(playerUidGenerator, "playerUidGenerator 不能为空");
     }
 
     //方法内所有数据库操作，要么全部成功提交，要么全部回滚，不会出现半成功状态
     @Transactional
     public RegisterAccountResponse createAccountAndWarehouse(
             String username,
-            String passwordHash)
-    {
+            String passwordHash) {
         Objects.requireNonNull(username, "username 不能为空");
         Objects.requireNonNull(passwordHash, "passwordHash 不能为空");
 
         UUID accountUuid = UUID.randomUUID();
-        long playerUid = playerUidGenerator.generate();
 
-        Account account = new Account(
-                accountUuid.toString(),
-                playerUid,
+        Account account = insertAccountWithUniquePlayerUid(
+                accountUuid,
                 username,
                 passwordHash);
 
-        insertAccount(account);
-
         Long accountId = account.getId();
 
-        if (accountId == null || accountId <= 0)
-        {
+        if (accountId == null || accountId <= 0) {
             throw new IllegalStateException("账号插入成功但数据库没有回填有效主键");
         }
 
@@ -71,52 +67,71 @@ public class AccountRegistrationTransaction {
 
         int insertedWarehouses = warehouseMapper.insert(warehouse);
 
-        if (insertedWarehouses != 1)
-        {
+        if (insertedWarehouses != 1) {
             throw new IllegalStateException("初始仓库插入影响行数不是 1");
         }
 
-        return new RegisterAccountResponse(accountUuid,Long.toString(playerUid), warehouseUuid);
-    }
-
-    private void insertAccount(Account account)
-    {
-        try
-        {
-            int insertedAccounts =  accountMapper.insert(account);
-
-            if (insertedAccounts != 1)
-            {
-                throw new IllegalStateException("账号插入影响行数不是 1");
-            }
-        }
-        catch (DuplicateKeyException exception)
-        {
-            if (isUsernameConstraintViolation(exception))
-            {
-                throw new BusinessException(
-                        AccountErrorCode.USERNAME_ALREADY_EXISTS);
-            }
-
-            /*
-             * account_uuid 等其他唯一约束冲突不能伪装成用户名重复。
-             * 交给全局异常处理器记录并返回内部错误。
-             */
-            throw exception;
-        }
+        return new RegisterAccountResponse(accountUuid, Long.toString(account.getPlayerUid()), warehouseUuid);
     }
 
     /**
-     * 判断唯一键冲突是否来自用户名唯一索引 uk_account_username
+     * 生成候选 UID 并尝试插入账号。
+     * 不使用“先查询再插入”，因为并发请求可能同时查询到 UID 不存在。
+     * 数据库唯一约束才是最终裁决者。
      */
-    private boolean isUsernameConstraintViolation(DuplicateKeyException exception)
-    {
-        // 获取整条异常链最底层的原始异常
+    private Account insertAccountWithUniquePlayerUid(
+            UUID accountUuid,
+            String username,
+            String passwordHash) {
+        for (int attempt = 1; attempt <= MAX_PLAYER_UID_ATTEMPTS; attempt++) {
+            long playerUid = playerUidGenerator.generate();
+
+            // 每次重试都创建新实体，避免复用失败插入后的实体状态。
+            Account account = new Account(
+                    accountUuid.toString(),
+                    playerUid,
+                    username,
+                    passwordHash);
+
+            try {
+                int insertedAccounts = accountMapper.insert(account);
+
+                if (insertedAccounts != 1) {
+                    throw new IllegalStateException("账号插入影响行数不是 1");
+                }
+
+                return account;
+            } catch (DuplicateKeyException exception) {
+                if (isConstraintViolation(
+                        exception,
+                        USERNAME_UNIQUE_CONSTRAINT)) {
+                    throw new BusinessException(AccountErrorCode.USERNAME_ALREADY_EXISTS);
+                }
+
+                if (!isConstraintViolation(
+                        exception,
+                        PLAYER_UID_UNIQUE_CONSTRAINT)) {
+                    // account_uuid 等其他冲突或数据库异常不能被隐藏。
+                    throw exception;
+                }
+
+                if (attempt == MAX_PLAYER_UID_ATTEMPTS) {
+                    throw new IllegalStateException("无法在限定次数内分配唯一玩家 UID", exception);
+                }
+            }
+        }
+
+        // 理论上循环内必定成功返回或抛出异常。
+        throw new IllegalStateException("玩家 UID 分配流程异常结束");
+    }
+
+    private boolean isConstraintViolation(
+            DuplicateKeyException exception,
+            String constraintName) {
         Throwable cause = exception.getMostSpecificCause();
-        // 获取数据库原生报错文本
+
         String message = cause.getMessage();
 
-        // 非空 + 包含索引名 → 判定为用户名重复冲突
-        return message != null && message.contains(USERNAME_UNIQUE_CONSTRAINT);
+        return message != null && message.contains(constraintName);
     }
 }
