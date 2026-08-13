@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 public enum ItemType {
     WEAPON("WEAPON"),
     ARMOR("ARMOR"),
-    STORAGE_ITEM("STORAGE_TIME"),
+    STORAGE_ITEM("STORAGE_ITEM"),
     CONSUMABLE("CONSUMABLE"),
     MISCELLANEOUS("MISCELLANEOUS");
 

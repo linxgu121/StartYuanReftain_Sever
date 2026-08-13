@@ -8,7 +8,7 @@ import lombok.Getter;
  * 物品 Footprint 中的一个局部逻辑格
  */
 @Getter
-@TableName("item_defintion_id")
+@TableName("item_footprint_cell")
 public class ItemFootprintCell {
     @TableField("item_definition_id")
     private String itemDefinitionId;
