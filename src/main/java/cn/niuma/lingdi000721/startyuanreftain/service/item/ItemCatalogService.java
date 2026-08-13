@@ -5,6 +5,7 @@ import cn.niuma.lingdi000721.startyuanreftain.entity.ItemDefinition;
 import cn.niuma.lingdi000721.startyuanreftain.entity.ItemFootprintCell;
 import cn.niuma.lingdi000721.startyuanreftain.mapper.ItemDefinitionMapper;
 import cn.niuma.lingdi000721.startyuanreftain.mapper.ItemFootprintCellMapper;
+import cn.niuma.lingdi000721.startyuanreftain.mapper.ItemCatalogMetadataMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +21,12 @@ import java.util.Optional;
 public class ItemCatalogService {
     private final ItemDefinitionMapper definitionMapper;
     private final ItemFootprintCellMapper footprintCellMapper;
+    private final ItemCatalogMetadataMapper metadataMapper;
 
     public ItemCatalogService(
             ItemDefinitionMapper definitionMapper,
-            ItemFootprintCellMapper footprintCellMapper)
+            ItemFootprintCellMapper footprintCellMapper,
+            ItemCatalogMetadataMapper metadataMapper)
     {
         this.definitionMapper = Objects.requireNonNull(
                 definitionMapper,
@@ -32,6 +35,10 @@ public class ItemCatalogService {
         this.footprintCellMapper = Objects.requireNonNull(
                 footprintCellMapper,
                 "footprintCellMapper 不能为空");
+
+        this.metadataMapper = Objects.requireNonNull(
+                metadataMapper,
+                "metadataMapper 不能为空");
     }
 
     /**
@@ -70,6 +77,30 @@ public class ItemCatalogService {
         {
             throw new IllegalStateException("服务端物品目录定义损坏：" + itemDefinitionId, exception);
         }
+    }
+
+    /**
+     * 读取服务端权威物品目录版本。
+     */
+    @Transactional(readOnly = true)
+    public int getCurrentCatalogVersion()
+    {
+        Integer catalogVersion =
+                metadataMapper.selectMainCatalogVersion();
+
+        if (catalogVersion == null)
+        {
+            throw new IllegalStateException(
+                    "服务端缺少 MAIN 物品目录版本");
+        }
+
+        if (catalogVersion < 1)
+        {
+            throw new IllegalStateException(
+                    "服务端 MAIN 物品目录版本无效");
+        }
+
+        return catalogVersion;
     }
 
     private ResolvedItemDefinition resolveDefinition(
