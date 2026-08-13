@@ -1,10 +1,12 @@
 package cn.niuma.lingdi000721.startyuanreftain.config.security;
 
+import cn.niuma.lingdi000721.startyuanreftain.common.security.ApiAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.http.HttpMethod;
 /**
@@ -15,7 +17,12 @@ import org.springframework.http.HttpMethod;
 @Configuration(proxyBeanMethods = false)
 public class WebSecurityConfiguration {
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtDecoder jwtDecoder,
+            JwtCurrentAccountConverter jwtAuthenticationConverter,
+            ApiAuthenticationEntryPoint authenticationEntryPoint)
+            throws Exception
     {
 
         http
@@ -28,15 +35,33 @@ public class WebSecurityConfiguration {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
+
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(
+                                authenticationEntryPoint))
+
+                .oauth2ResourceServer(resourceServer ->
+                        resourceServer
+                                .authenticationEntryPoint(
+                                        authenticationEntryPoint)
+                                .jwt(jwt ->
+                                        jwt.decoder(jwtDecoder)
+                                                .jwtAuthenticationConverter(jwtAuthenticationConverter)))
+
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 HttpMethod.POST,
-                                "/api/v1/auth/register")
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/login")
                         .permitAll()
                         .requestMatchers(
                                 "/actuator/health",
                                 "/actuator/health/**")
                         .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/game/warehouse")
+                        .authenticated()
                         .anyRequest()
                         .denyAll());
 

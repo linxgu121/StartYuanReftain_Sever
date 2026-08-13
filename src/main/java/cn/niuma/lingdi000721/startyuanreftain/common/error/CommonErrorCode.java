@@ -24,7 +24,12 @@ public enum CommonErrorCode implements ErrorCode {
     INTERNAL_ERROR(
             "COMMON_INTERNAL_ERROR",
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "服务器内部错误");
+            "服务器内部错误"),
+
+    AUTH_UNAUTHORIZED(
+        "AUTH_UNAUTHORIZED",
+        HttpStatus.UNAUTHORIZED,
+        "身份凭证缺失或无效");
 
     private final String code;
     private final HttpStatus httpStatus;

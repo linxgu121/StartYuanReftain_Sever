@@ -21,7 +21,7 @@ import java.util.UUID;
 @Service
 public final class AccountAuthenticationService {
 
-    //防御定时攻击,也用于第三方登录占位
+    //缩小账号不存在与密码错误之间的响应耗时差异
     private static final String DUMMY_PASSWORD =  "Niuma-Dummy-Credential-Only!";
 
     private final AccountMapper accountMapper;
