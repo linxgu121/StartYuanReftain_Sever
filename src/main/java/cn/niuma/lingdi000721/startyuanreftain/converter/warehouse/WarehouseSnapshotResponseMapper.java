@@ -17,7 +17,7 @@ import java.util.Objects;
  * 不访问数据库、不调用 Service、不修改领域对象。
  */
 @Component
-public class WarehouseSnapshotResponseMapper {
+public final class WarehouseSnapshotResponseMapper {
     public WarehouseSnapshotResponse toResponse(
             ResolvedWarehouseSnapshot snapshot)
     {

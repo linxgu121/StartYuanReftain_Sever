@@ -3,10 +3,12 @@ package cn.niuma.lingdi000721.startyuanreftain.service.warehouse;
 import cn.niuma.lingdi000721.startyuanreftain.service.item.ItemCatalogService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import cn.niuma.lingdi000721.startyuanreftain.service.item.ResolvedItemDefinition;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Map;
 
 /**
  * 在同一个只读事务中组装玩家仓库快照。
@@ -19,11 +21,13 @@ public class WarehouseSnapshotService {
     private final WarehouseHeaderService warehouseHeaderService;
     private final WarehousePlacementService warehousePlacementService;
     private final ItemCatalogService itemCatalogService;
+    private final WarehouseSnapshotValidator warehouseSnapshotValidator;
 
     public WarehouseSnapshotService(
             WarehouseHeaderService warehouseHeaderService,
             WarehousePlacementService warehousePlacementService,
-            ItemCatalogService itemCatalogService)
+            ItemCatalogService itemCatalogService,
+            WarehouseSnapshotValidator warehouseSnapshotValidator)
     {
         this.warehouseHeaderService = Objects.requireNonNull(
                 warehouseHeaderService,
@@ -36,6 +40,10 @@ public class WarehouseSnapshotService {
         this.itemCatalogService = Objects.requireNonNull(
                 itemCatalogService,
                 "itemCatalogService 不能为空");
+
+        this.warehouseSnapshotValidator = Objects.requireNonNull(
+                warehouseSnapshotValidator,
+                "warehouseSnapshotValidator 不能为空");
     }
 
     /**
@@ -57,12 +65,38 @@ public class WarehouseSnapshotService {
                 warehousePlacementService.loadByWarehouseId(
                         header.persistenceId());
 
+        /*
+         * 提取本次快照涉及的全部物品定义 ID，
+         * 用于批量加载服务端权威定义。
+         */
+        List<String> itemDefinitionIds =
+                placements.stream()
+                        .map(
+                                ResolvedWarehousePlacement
+                                        ::itemDefinitionId)
+                        .distinct()
+                        .toList();
+
         int catalogVersion =
                 itemCatalogService.getCurrentCatalogVersion();
 
-        return new ResolvedWarehouseSnapshot(
-                header,
-                catalogVersion,
-                placements);
+        Map<String, ResolvedItemDefinition> definitionsById =
+                itemCatalogService.loadEnabledRequiredByIds(
+                        itemDefinitionIds);
+
+        ResolvedWarehouseSnapshot snapshot =
+                new ResolvedWarehouseSnapshot(
+                        header,
+                        catalogVersion,
+                        placements);
+
+        /*
+         * 使用权威定义校验快照：
+         * 每个 Placement 的 itemDefinitionId 必须存在且启用，
+         * 同时验证 orientation 与 rotation_policy 的兼容性。
+         */
+        warehouseSnapshotValidator.validate(snapshot, definitionsById);
+
+        return snapshot;
     }
 }
