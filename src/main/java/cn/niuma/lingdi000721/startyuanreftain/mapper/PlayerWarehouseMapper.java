@@ -4,6 +4,7 @@ import cn.niuma.lingdi000721.startyuanreftain.entity.PlayerWarehouse;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 /**
  * 玩家仓库的持久化边界。
@@ -38,5 +39,25 @@ public interface PlayerWarehouseMapper extends BaseMapper<PlayerWarehouse> {
     PlayerWarehouse selectByAccountUuid(
             @Param("accountUuid")
             String accountUuid);
+
+    /**
+     * 仅当仓库当前 revision 与客户端期望值一致时，
+     * 才把 revision 原子递增 1。
+     *
+     * 返回 1：更新成功。
+     * 返回 0：仓库不存在或 expectedRevision 已过期。
+     */
+    @Update("""
+        UPDATE player_warehouse
+        SET revision = revision + 1
+        WHERE id = #{warehouseId}
+          AND revision = #{expectedRevision}
+        """)
+    int incrementRevisionIfMatches(
+            @Param("warehouseId")
+            long warehouseId,
+
+            @Param("expectedRevision")
+            long expectedRevision);
 
 }

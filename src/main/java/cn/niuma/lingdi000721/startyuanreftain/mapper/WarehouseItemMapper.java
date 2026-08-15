@@ -3,6 +3,7 @@ package cn.niuma.lingdi000721.startyuanreftain.mapper;
 import cn.niuma.lingdi000721.startyuanreftain.entity.WarehouseItem;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -29,4 +30,35 @@ public interface WarehouseItemMapper {
             ORDER BY id ASC
             """)
     List<WarehouseItem> selectByWarehouseId(@Param("warehouseId") long warehouseId);
+
+    /**
+     * 更新指定仓库内某个物品实例的位置和朝向。
+     * warehouseId 同时作为所有权边界，
+     * 防止通过 instanceUuid 修改其他玩家仓库中的物品。
+     * 返回 1：目标物品存在并完成更新。
+     * 返回 0：该仓库中不存在这个物品实例。
+     */
+    @Update("""
+        UPDATE warehouse_item
+        SET origin_x = #{originX},
+            origin_y = #{originY},
+            orientation_degrees = #{orientationDegrees}
+        WHERE warehouse_id = #{warehouseId}
+          AND instance_uuid = #{instanceUuid}
+        """)
+    int updatePlacement(
+            @Param("warehouseId")
+            long warehouseId,
+
+            @Param("instanceUuid")
+            String instanceUuid,
+
+            @Param("originX")
+            int originX,
+
+            @Param("originY")
+            int originY,
+
+            @Param("orientationDegrees")
+            int orientationDegrees);
 }
