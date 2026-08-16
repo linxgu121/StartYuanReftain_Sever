@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 
 public enum WarehouseErrorCode implements ErrorCode
 {
-    TIEM_NOT_FOUND(
+    ITEM_NOT_FOUND(
             "WAREHOUSE_ITEM_NOT_FOUND",
             HttpStatus.NOT_FOUND,
             "仓库中不存在该物品"),
