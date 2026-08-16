@@ -62,6 +62,10 @@ public class WebSecurityConfiguration {
                                 HttpMethod.GET,
                                 "/api/v1/game/warehouse")
                         .authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/game/warehouse/items/relocate")
+                        .authenticated()
                         .anyRequest()
                         .denyAll());
 
