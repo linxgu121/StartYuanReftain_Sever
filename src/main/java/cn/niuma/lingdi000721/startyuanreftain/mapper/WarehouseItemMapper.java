@@ -1,6 +1,7 @@
 package cn.niuma.lingdi000721.startyuanreftain.mapper;
 
 import cn.niuma.lingdi000721.startyuanreftain.entity.WarehouseItem;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -13,6 +14,58 @@ import java.util.List;
  * 使用内部自增主键排序，保证同一数据库中的读取顺序稳定。
  */
 public interface WarehouseItemMapper {
+    /**
+     * 插入一个已经由服务端完成空间校验的物品实例。
+     *
+     * Mapper 只负责持久化，不负责生成 InstanceId、
+     * 寻找位置或验证碰撞。
+     *
+     * 返回值是实际插入的数据库行数，正常情况必须为 1。
+     */
+    @Insert("""
+        INSERT INTO warehouse_item
+        (
+            instance_uuid,
+            warehouse_id,
+            item_definition_id,
+            stack_count,
+            origin_x,
+            origin_y,
+            orientation_degrees
+        )
+        VALUES
+        (
+            #{instanceUuid},
+            #{warehouseId},
+            #{itemDefinitionId},
+            #{stackCount},
+            #{originX},
+            #{originY},
+            #{orientationDegrees}
+        )
+        """)
+    int insertItem(
+            @Param("warehouseId")
+            long warehouseId,
+
+            @Param("instanceUuid")
+            String instanceUuid,
+
+            @Param("itemDefinitionId")
+            String itemDefinitionId,
+
+            @Param("stackCount")
+            int stackCount,
+
+            @Param("originX")
+            int originX,
+
+            @Param("originY")
+            int originY,
+
+            @Param("orientationDegrees")
+            int orientationDegrees);
+
     @Select("""
             SELECT
                 id,
