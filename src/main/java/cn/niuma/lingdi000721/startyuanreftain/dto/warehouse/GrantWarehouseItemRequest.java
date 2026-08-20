@@ -15,8 +15,6 @@ import jakarta.validation.constraints.Size;
 public record GrantWarehouseItemRequest(
         /**
          * 服务端权威物品定义 ID。
-         * @NotBlank 不能为空
-         * @Size 不能超过指定字符
          */
         @NotBlank(message = "物品定义 ID 不能为空")
         @Size(max = 128,message = "物品定义 ID 不能超过 128 个字符")
@@ -24,8 +22,6 @@ public record GrantWarehouseItemRequest(
 
         /**
          * 本次发放的物品数量。
-         * @NotNull 发放数量不能为空
-         * @Positive 发放数量必须大于0
          */
         @NotNull(message = "发放数量不能为空")
         @Positive(message = "发放数量必须大于 0")
