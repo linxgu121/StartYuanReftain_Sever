@@ -15,6 +15,8 @@ import java.util.*;
 /**
  * 仓库物品发放事务服务。
  *
+ * 加载快照 → 构造合法候选 → INSERT → revision CAS → 重新加载权威快照
+ *
  * 负责加载权威快照、检查物品定义、寻找合法位置、
  * 插入物品记录并通过 revision CAS 处理并发冲突。
  */
@@ -208,9 +210,7 @@ public class WarehouseItemGrantService
 
         if (updatedRows != 1)
         {
-            throw new IllegalStateException(
-                    "仓库 revision 更新行数异常："
-                            + updatedRows);
+            throw new IllegalStateException("仓库 revision 更新行数异常：" + updatedRows);
         }
     }
 
