@@ -1,6 +1,7 @@
 package cn.niuma.lingdi000721.startyuanreftain.config.security;
 
 import cn.niuma.lingdi000721.startyuanreftain.common.security.ApiAuthenticationEntryPoint;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,7 +22,10 @@ public class WebSecurityConfiguration {
             HttpSecurity http,
             JwtDecoder jwtDecoder,
             JwtCurrentAccountConverter jwtAuthenticationConverter,
-            ApiAuthenticationEntryPoint authenticationEntryPoint)
+            ApiAuthenticationEntryPoint authenticationEntryPoint,
+
+            @Value("${niuma.dev.item-grant-enabled:false}")
+            boolean itemGrantEnabled)
             throws Exception
     {
 
@@ -48,26 +52,52 @@ public class WebSecurityConfiguration {
                                         jwt.decoder(jwtDecoder)
                                                 .jwtAuthenticationConverter(jwtAuthenticationConverter)))
 
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/v1/auth/register",
-                                "/api/v1/auth/login")
-                        .permitAll()
-                        .requestMatchers(
-                                "/actuator/health",
-                                "/actuator/health/**")
-                        .permitAll()
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/v1/game/warehouse")
-                        .authenticated()
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/v1/game/warehouse/items/relocate")
-                        .authenticated()
-                        .anyRequest()
-                        .denyAll());
+                .authorizeHttpRequests(authorize ->
+                {
+                    authorize
+                            .requestMatchers(
+                                    HttpMethod.POST,
+                                    "/api/v1/auth/register",
+                                    "/api/v1/auth/login")
+                            .permitAll();
+
+                    authorize
+                            .requestMatchers(
+                                    "/actuator/health",
+                                    "/actuator/health/**")
+                            .permitAll();
+
+                    authorize
+                            .requestMatchers(
+                                    HttpMethod.GET,
+                                    "/api/v1/game/warehouse")
+                            .authenticated();
+
+                    authorize
+                            .requestMatchers(
+                                    HttpMethod.POST,
+                                    "/api/v1/game/warehouse/items/relocate")
+                            .authenticated();
+
+                    /*
+                     * 只有开发发放功能显式开启时，
+                     * Security 才允许认证用户访问这个接口。
+                     */
+                    if (itemGrantEnabled)
+                    {
+                        authorize
+                                .requestMatchers(
+                                        HttpMethod.POST,
+                                        "/api/v1/dev/warehouse/items/grant")
+                                .authenticated();
+                    }
+
+                    /*
+                     * 必须放在所有精确匹配规则之后。
+                     * 未明确声明的请求继续默认拒绝。
+                     */
+                    authorize.anyRequest().denyAll();
+                });
 
         return http.build();
     }
