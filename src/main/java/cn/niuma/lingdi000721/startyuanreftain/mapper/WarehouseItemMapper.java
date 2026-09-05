@@ -85,6 +85,36 @@ public interface WarehouseItemMapper {
     List<WarehouseItem> selectByWarehouseId(@Param("warehouseId") long warehouseId);
 
     /**
+     * 统计指定仓库真正拥有的目标物品数量。
+     *
+     * instanceUuids 必须是已经去重的非空 UUID 集合；
+     * 空集合由 Service 直接跳过，不能调用本方法。
+     */
+    @Select("""
+            <script>
+            SELECT COUNT(DISTINCT item.instance_uuid)
+            FROM warehouse_item AS item
+            WHERE item.warehouse_id = #{warehouseId}
+              AND item.instance_uuid IN
+              <foreach
+                  collection="instanceUuids"
+                  item="instanceUuid"
+                  open="("
+                  separator=","
+                  close=")">
+                  #{instanceUuid}
+              </foreach>
+            </script>
+            """)
+    int countOwnedInstances(
+            @Param("warehouseId")
+            long warehouseId,
+
+            @Param("instanceUuids")
+            List<String> instanceUuids);
+
+
+    /**
      * 更新指定仓库内某个物品实例的位置和朝向。
      * warehouseId 同时作为所有权边界，
      * 防止通过 instanceUuid 修改其他玩家仓库中的物品。

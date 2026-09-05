@@ -76,6 +76,12 @@ public class WebSecurityConfiguration {
 
                     authorize
                             .requestMatchers(
+                                    HttpMethod.PUT,
+                                    "/api/v1/game/warehouse/quick-slots")
+                            .authenticated();
+
+                    authorize
+                            .requestMatchers(
                                     HttpMethod.POST,
                                     "/api/v1/game/warehouse/items/relocate")
                             .authenticated();
