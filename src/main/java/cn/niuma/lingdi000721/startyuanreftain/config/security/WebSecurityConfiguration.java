@@ -70,7 +70,8 @@ public class WebSecurityConfiguration {
                     authorize
                             .requestMatchers(
                                     HttpMethod.GET,
-                                    "/api/v1/game/warehouse")
+                                    "/api/v1/game/warehouse",
+                                    "/api/v1/game/warehouse/quick-slots")
                             .authenticated();
 
                     authorize
