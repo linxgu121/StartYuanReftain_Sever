@@ -3,9 +3,11 @@ package cn.niuma.lingdi000721.startyuanreftain.service.account;
 import cn.niuma.lingdi000721.startyuanreftain.dto.account.RegisterAccountResponse;
 import cn.niuma.lingdi000721.startyuanreftain.common.error.BusinessException;
 import cn.niuma.lingdi000721.startyuanreftain.entity.Account;
+import cn.niuma.lingdi000721.startyuanreftain.entity.PlayerQuickSlot;
 import cn.niuma.lingdi000721.startyuanreftain.entity.PlayerWarehouse;
 import cn.niuma.lingdi000721.startyuanreftain.enums.AccountErrorCode;
 import cn.niuma.lingdi000721.startyuanreftain.mapper.AccountMapper;
+import cn.niuma.lingdi000721.startyuanreftain.mapper.PlayerQuickSlotMapper;
 import cn.niuma.lingdi000721.startyuanreftain.mapper.PlayerWarehouseMapper;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -28,21 +30,30 @@ public class AccountRegistrationTransaction {
     private final PlayerUidGenerator playerUidGenerator;
     private final AccountMapper accountMapper;
     private final PlayerWarehouseMapper warehouseMapper;
+    private final PlayerQuickSlotMapper quickSlotMapper;
 
     public AccountRegistrationTransaction(
             AccountMapper accountMapper,
             PlayerWarehouseMapper warehouseMapper,
-            PlayerUidGenerator playerUidGenerator) {
-        this.accountMapper = Objects.requireNonNull(accountMapper, "accountMapper 不能为空");
+            PlayerQuickSlotMapper quickSlotMapper,
+            PlayerUidGenerator playerUidGenerator)
+    {
+        this.accountMapper = Objects.requireNonNull(
+                accountMapper, "accountMapper 不能为空");
 
-        this.warehouseMapper = Objects.requireNonNull(warehouseMapper, "warehouseMapper 不能为空");
+        this.warehouseMapper = Objects.requireNonNull(
+                warehouseMapper, "warehouseMapper 不能为空");
 
-        this.playerUidGenerator = Objects.requireNonNull(playerUidGenerator, "playerUidGenerator 不能为空");
+        this.quickSlotMapper = Objects.requireNonNull(
+                quickSlotMapper, "quickSlotMapper 不能为空");
+
+        this.playerUidGenerator = Objects.requireNonNull(
+                playerUidGenerator, "playerUidGenerator 不能为空");
     }
 
     //方法内所有数据库操作，要么全部成功提交，要么全部回滚，不会出现半成功状态
     @Transactional
-    public RegisterAccountResponse createAccountAndWarehouse(
+    public RegisterAccountResponse createAccountAndInitialPersistence(
             String username,
             String passwordHash) {
         Objects.requireNonNull(username, "username 不能为空");
@@ -70,6 +81,21 @@ public class AccountRegistrationTransaction {
         if (insertedWarehouses != 1) {
             throw new IllegalStateException("初始仓库插入影响行数不是 1");
         }
+
+        /*
+         * 快捷栏头必须与账号、仓库在同一个事务中创建。
+         * 任意一步失败都会回滚，避免产生不完整账号。
+         */
+        PlayerQuickSlot quickSlot = new PlayerQuickSlot(accountId);
+
+        int insertedQuickSlots =
+                quickSlotMapper.insert(quickSlot);
+
+        if (insertedQuickSlots != 1)
+        {
+            throw new IllegalStateException("初始快捷栏头插入影响行数不是 1");
+        }
+
 
         return new RegisterAccountResponse(accountUuid, Long.toString(account.getPlayerUid()), warehouseUuid);
     }

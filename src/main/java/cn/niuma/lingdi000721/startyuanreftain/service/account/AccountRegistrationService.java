@@ -34,7 +34,7 @@ public class AccountRegistrationService {
 
         String passwordHash =  passwordEncoder.encode(request.password());
 
-        return registrationTransaction.createAccountAndWarehouse(
+        return registrationTransaction.createAccountAndInitialPersistence(
                 request.username(),
                 passwordHash);
     }
