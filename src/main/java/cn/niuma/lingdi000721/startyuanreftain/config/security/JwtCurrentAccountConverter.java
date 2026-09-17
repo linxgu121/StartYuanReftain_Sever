@@ -1,5 +1,6 @@
 package cn.niuma.lingdi000721.startyuanreftain.config.security;
 
+import cn.niuma.lingdi000721.startyuanreftain.common.security.AccessTokenUse;
 import cn.niuma.lingdi000721.startyuanreftain.common.security.CurrentAccountPrincipal;
 import cn.niuma.lingdi000721.startyuanreftain.common.security.NiumaJwtClaims;
 import org.springframework.core.convert.converter.Converter;
@@ -32,10 +33,15 @@ public final class JwtCurrentAccountConverter implements Converter<Jwt,AbstractA
                             jwt.getClaimAsString(
                                     NiumaJwtClaims.PLAYER_UID));
 
+            AccessTokenUse use = AccessTokenUse.fromClaim(
+                    jwt.getClaims().get(NiumaJwtClaims.TOKEN_USE));
+
+            // 权限由服务端根据已验证的用途生成。
+            // 不读取客户端任意提供的 roles 或 authorities 来授权。
             return new JwtAuthenticationToken(
                     jwt,
                     principal,
-                    AuthorityUtils.NO_AUTHORITIES);
+                    AuthorityUtils.createAuthorityList(use.getAuthority()));
         }
         catch (RuntimeException exception)
         {

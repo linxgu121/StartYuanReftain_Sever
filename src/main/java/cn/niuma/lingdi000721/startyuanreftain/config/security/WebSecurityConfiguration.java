@@ -1,5 +1,6 @@
 package cn.niuma.lingdi000721.startyuanreftain.config.security;
 
+import cn.niuma.lingdi000721.startyuanreftain.common.security.AccessTokenUse;
 import cn.niuma.lingdi000721.startyuanreftain.common.security.ApiAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -72,19 +73,19 @@ public class WebSecurityConfiguration {
                                     HttpMethod.GET,
                                     "/api/v1/game/warehouse",
                                     "/api/v1/game/warehouse/quick-slots")
-                            .authenticated();
+                            .hasAuthority(AccessTokenUse.GAME.getAuthority());
 
                     authorize
                             .requestMatchers(
                                     HttpMethod.PUT,
                                     "/api/v1/game/warehouse/quick-slots")
-                            .authenticated();
+                            .hasAuthority(AccessTokenUse.GAME.getAuthority());
 
                     authorize
                             .requestMatchers(
                                     HttpMethod.POST,
                                     "/api/v1/game/warehouse/items/relocate")
-                            .authenticated();
+                            .hasAuthority(AccessTokenUse.GAME.getAuthority());
 
                     /*
                      * 只有开发发放功能显式开启时，
@@ -96,7 +97,7 @@ public class WebSecurityConfiguration {
                                 .requestMatchers(
                                         HttpMethod.POST,
                                         "/api/v1/dev/warehouse/items/grant")
-                                .authenticated();
+                                .hasAuthority(AccessTokenUse.GAME.getAuthority());
                     }
 
                     /*

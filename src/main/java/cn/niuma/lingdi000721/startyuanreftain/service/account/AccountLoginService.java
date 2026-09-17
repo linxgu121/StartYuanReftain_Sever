@@ -38,11 +38,9 @@ public final class AccountLoginService {
                 request,
                 "request 不能为空");
 
-        AuthenticatedAccount account =
-                authenticationService.authenticate(request);
+        AuthenticatedAccount account = authenticationService.authenticate(request);
 
-        IssuedAccessToken token =
-                accessTokenService.issue(account);
+        IssuedAccessToken token = accessTokenService.issueLauncher(account);
 
         long expiresInSeconds = Duration.between(
                         token.issuedAt(),
