@@ -31,7 +31,7 @@ import java.util.UUID;
  *  JWT 签发与验证配置中心
  */
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, GameLaunchProperties.class})
 public class JwtSecurityConfiguration {
     //时间基准
     @Bean
